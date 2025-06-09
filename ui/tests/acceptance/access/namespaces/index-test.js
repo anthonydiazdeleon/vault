@@ -9,6 +9,7 @@ import { setupApplicationTest } from 'ember-qunit';
 import { setupMirage } from 'ember-cli-mirage/test-support';
 import { login } from 'vault/tests/helpers/auth/auth-helpers';
 import { GENERAL } from 'vault/tests/helpers/general-selectors';
+import { NAMESPACE_PICKER_SELECTORS } from 'vault/tests/helpers/namespace-picker';
 
 module('Acceptance | Enterprise | /access/namespaces', function (hooks) {
   setupApplicationTest(hooks);
@@ -135,6 +136,22 @@ module('Acceptance | Enterprise | /access/namespaces', function (hooks) {
     // Verify that the user can delete the namespace
     const deleteNamespaceButton = '.hds-dropdown-list-item:nth-of-type(2)';
     assert.dom(deleteNamespaceButton).hasText('Delete', 'Allow users to delete the namespace');
+  });
+
+  test('it should render updated namespace after switching from access page', async function (assert) {
+    await visit('/vault/access/namespaces');
+
+    this.server.get('/sys/internal/ui/mounts', () => ({
+      data: {},
+    }));
+
+    await click(GENERAL.menuTrigger);
+    await click(GENERAL.menuItem('switch'));
+
+    // Verify that we switched namespaces
+    assert.dom(NAMESPACE_PICKER_SELECTORS.toggle).hasText('ns1');
+    assert.dom('[data-test-badge-namespace]').hasText('ns1');
+    assert.strictEqual(currentRouteName(), 'vault.cluster.dashboard', 'navigates to the correct route');
   });
 
   test('it should hide the switch to namespace option for unaccessible namespaces', async function (assert) {
